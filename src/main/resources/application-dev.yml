@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: watermark
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/watermark?useUnicode=true&useSSL=false&characterEncoding=utf8
+    username: root
+    password: 123456
+
+server:
+  port: 9001
+  servlet:
+    context-path: /watermark
+
+
+watermark:
+  path:
+    upload: D:/Temp/data/upload
+    domain: http://localhost:${server.port}
+
