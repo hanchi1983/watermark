@@ -12,6 +12,7 @@ import xyz.liuyuhe.watermark.watermark.Watermark;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -36,6 +37,36 @@ public class Algorithm1 implements Watermark {
         }
         if (image == null || watermark == null) {
             log.error("读取图片失败");
+            return null;
+        }
+        // 格式转换
+        if (!imageUrl.endsWith("png")) {
+            try {
+                image = toPng(image);
+            } catch (Exception e) {
+                log.error("格式转换失败: " + e.getMessage());
+                return null;
+            }
+        }
+        if (!watermarkUrl.endsWith("png")) {
+            try {
+                watermark = toPng(image);
+            } catch (Exception e) {
+                log.error("格式转换失败: " + e.getMessage());
+                return null;
+            }
+        }
+        int imageWidth = image.getWidth(), imageHeight = image.getHeight();
+        int watermarkWidth = watermark.getWidth(), watermarkHeight = watermark.getHeight();
+        if (watermarkHeight != watermarkWidth) {
+            // 调整水印的尺寸
+            int val = Math.min(watermarkWidth, watermarkHeight);
+            watermark = resize(watermark, val, val);
+        }
+        watermarkWidth = watermark.getWidth();
+        watermarkHeight = watermark.getHeight();
+        if (imageWidth * imageHeight < watermarkWidth * watermarkHeight) {
+            log.error("水印图片尺寸不合适");
             return null;
         }
         int a, b, n, u, num, k;
@@ -76,8 +107,6 @@ public class Algorithm1 implements Watermark {
             log.error("Logistic加密失败");
             return null;
         }
-        int imageWidth = image.getWidth(), imageHeight = image.getHeight();
-        int watermarkWidth = watermark.getWidth(), watermarkHeight = watermark.getHeight();
         // 确定嵌入位置
         int[] positionArray = generatePositionArray(imageHeight, imageWidth, watermarkHeight * watermarkWidth, k);
         // 水印嵌入
@@ -85,7 +114,7 @@ public class Algorithm1 implements Watermark {
         int[][] imageArray = new int[imageHeight][imageWidth];
         for (int i = 0; i < watermarkHeight; i++) {
             for (int j = 0; j < watermarkWidth; j++) {
-                final int color = watermarkEnc.getRGB(i, j);
+                final int color = watermarkEnc.getRGB(j, i);
                 final int r = (color >> 16) & 0xff;
                 if (r == 0) {
                     watermarkArray[i][j] = 0;
@@ -96,7 +125,7 @@ public class Algorithm1 implements Watermark {
         }
         for (int i = 0; i < imageHeight; i++) {
             for (int j = 0; j < imageWidth; j++) {
-                imageArray[i][j] = imageEnc.getRGB(i, j);
+                imageArray[i][j] = imageEnc.getRGB(j, i);
             }
         }
         for (int i = 0; i < positionArray.length; i++) {
@@ -110,7 +139,7 @@ public class Algorithm1 implements Watermark {
         BufferedImage result = new BufferedImage(imageWidth, imageHeight, image.getType());
         for (int i = 0; i < imageHeight; i++) {
             for (int j = 0; j < imageWidth; j++) {
-                result.setRGB(i, j, imageArray[i][j]);
+                result.setRGB(j, i, imageArray[i][j]);
             }
         }
         // 载体图像解密
@@ -166,7 +195,7 @@ public class Algorithm1 implements Watermark {
         int[][] imageArray = new int[imageHeight][imageWidth];
         for (int i = 0; i < imageHeight; i++) {
             for (int j = 0; j < imageWidth; j++) {
-                imageArray[i][j] = imageEnc.getRGB(i, j);
+                imageArray[i][j] = imageEnc.getRGB(j, i);
             }
         }
         int black = new Color(0, 0, 0).getRGB();
@@ -187,7 +216,7 @@ public class Algorithm1 implements Watermark {
         BufferedImage result = new BufferedImage(width, height, image.getType());
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                result.setRGB(i, j, watermarkArray[i][j]);
+                result.setRGB(j, i, watermarkArray[i][j]);
             }
         }
         result = Arnold.decrypt(result, a, b, n);
@@ -246,5 +275,20 @@ public class Algorithm1 implements Watermark {
     private static int getEmbeddedPosition(int pos) {
         Random random = new Random(pos);
         return random.nextInt(3) + 3;
+    }
+
+    private static BufferedImage resize(BufferedImage image, int newWidth, int newHeight) {
+        Image temp = image.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+        BufferedImage result = new BufferedImage(newWidth, newHeight, image.getType());
+        Graphics2D graphics2D = result.createGraphics();
+        graphics2D.drawImage(temp, 0, 0, null);
+        graphics2D.dispose();
+        return result;
+    }
+
+    private BufferedImage toPng(BufferedImage image) throws Exception {
+        String path = uploadPath + "/" + CommonUtil.generateUUID() + ".png";
+        ImageIO.write(image, "png", new FileOutputStream(path));
+        return ImageIO.read(new FileInputStream(path));
     }
 }

@@ -22,7 +22,7 @@ public class Logistic {
         BufferedImage image = new BufferedImage(w, h, type);
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                image.setRGB(i, j, array[i][j]);
+                image.setRGB(j, i, array[i][j]);
             }
         }
         return image;
@@ -33,7 +33,7 @@ public class Logistic {
         int[][] result = new int[h][w];
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                result[i][j] = image.getRGB(i, j);
+                result[i][j] = image.getRGB(j, i);
             }
         }
         return result;
