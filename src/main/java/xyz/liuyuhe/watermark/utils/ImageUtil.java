@@ -78,7 +78,7 @@ public class ImageUtil {
                 pos[x][y] = avg;
             }
         }
-        double s = 192;
+        double s = getImageThresholdByOTSU(image);
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
                 if (pos[x][y] < s) {
@@ -89,5 +89,47 @@ public class ImageUtil {
             }
         }
         return b;
+    }
+
+    public static double getImageThresholdByOTSU(BufferedImage image) {
+        // 大津法
+        double threshold = 0;
+        final int grayScale = 256;
+        int width = image.getWidth(), height = image.getHeight();
+        int[] pixelCount = new int[grayScale];
+        double[] pixelPro = new double[grayScale];
+        int i, j, pixelSum = width * height;
+        for (i = 0; i < height; i++) {
+            for (j = 0; j < width; j++) {
+                int rgb = image.getRGB(j, i);
+                final int r = (rgb >> 16) & 0xff;
+                final int g = (rgb >> 8) & 0xff;
+                final int b = rgb & 0xff;
+                int val = (int) (0.3 * r + 0.59 * g + 0.11 * b);
+                pixelCount[val]++;
+            }
+        }
+        double w0, w1, u0tmp, u1tmp, u0, u1, deltaTmp, deltaMax = 0;
+        for (i = 0; i < grayScale; i++) {
+            w0 = w1 = u0tmp = u1tmp = 0;
+            for (j = 0; j < grayScale; j++) {
+                pixelPro[j] = 1.0 * pixelCount[j] / pixelSum;
+                if (j <= i) {
+                    w0 += pixelPro[j];
+                    u0tmp += j * pixelPro[j];
+                } else {
+                    w1 += pixelPro[j];
+                    u1tmp += j * pixelPro[j];
+                }
+            }
+            u0 = u0tmp / w0;
+            u1 = u1tmp / w1;
+            deltaTmp = w0 * w1 * Math.pow((u0 - u1), 2);
+            if (deltaTmp > deltaMax) {
+                deltaMax = deltaTmp;
+                threshold = i;
+            }
+        }
+        return threshold;
     }
 }
