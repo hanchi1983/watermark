@@ -3,6 +3,11 @@ package xyz.liuyuhe.watermark.watermark;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
+/**
+ * Arnold变换
+ * [[1, b], [a, a * b + 1]]
+ * [[a * b + 1, -b], [-a, 1]]
+ */
 public class Arnold {
     public static BufferedImage encrypt(BufferedImage image, int a, int b, int n) {
         int w = image.getWidth();

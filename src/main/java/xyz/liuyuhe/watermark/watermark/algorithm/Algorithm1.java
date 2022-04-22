@@ -78,8 +78,8 @@ public class Algorithm1 implements Watermark {
             a = random.nextInt(10) + 7;
             b = random.nextInt(10) + 11;
             n = 5 + random.nextInt(5);
-            x0 = 0.1;
-            u = random.nextInt(10) + 4;
+            x0 = random.nextDouble();
+            u = 4;
             num = 500;
             k = random.nextInt(1000);
             key = a + "-" + b + "-" + n + "-" + x0 + "-" + u + "-" + num + "-" + k;
